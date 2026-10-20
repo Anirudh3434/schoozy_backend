@@ -40,6 +40,22 @@ const fileUpload = async (filePath) => {
 };
 
 
+const bufferUpload = async (buffer, filename, contentType = 'image/jpeg') => {
+  const fileKey = `${Date.now()}-${filename}`;
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: s3Bucket,
+      Key: fileKey,
+      Body: buffer,
+      ContentType: contentType,
+    }),
+  );
+  const fileUrl = `https://${s3Bucket}.s3.us-east-1.amazonaws.com/${fileKey}`;
+  console.log(`Buffer uploaded successfully: ${fileUrl}`);
+  return fileUrl;
+};
+
+
 const deleteOldFile = async (fileKey) => {
   try {
     const delCommand = new DeleteObjectCommand({
@@ -53,4 +69,4 @@ const deleteOldFile = async (fileKey) => {
   }
 };
 
-export { fileUpload, deleteOldFile };
+export { fileUpload, bufferUpload, deleteOldFile };
