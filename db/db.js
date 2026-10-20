@@ -1,29 +1,27 @@
-import mysql from 'mysql2';
+import pg from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const { Pool } = pg;
 
+console.log('DATABASE_URL set =', !!process.env.DATABASE_URL);
 
-console.log('DB_HOST=', process.env.DB_HOST);
-console.log('DB_USER=', process.env.DB_USER);
-console.log('DB_PASSWORD=', process.env.DB_PASSWORD);
-console.log('DB_NAME=', process.env.DB_NAME);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-};
+pool.on('error', (err) => {
+  console.error('❌ Unexpected PG pool error:', err);
+});
 
-const db = mysql.createConnection(dbConfig);
-
-db.connect((err) => {
+// Test connection on startup
+pool.query('SELECT NOW()', (err, res) => {
   if (err) {
-    console.error('❌ Error connecting to MySQL:', err);
+    console.error('❌ Error connecting to Postgres (Neon):', err.message);
   } else {
-    console.log('✅ Connected to MySQL');
+    console.log('✅ Connected to Postgres (Neon) at', res.rows[0].now);
   }
 });
 
-export default db;
+export default pool;

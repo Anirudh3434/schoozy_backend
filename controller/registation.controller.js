@@ -29,7 +29,7 @@ export const InsertRegistration = async (req, res) => {
       school_country,
       medium,
       subjects,
-    } = req.body;
+    } = req.body || {};
 
     // Validate required files
     if (!req.files?.passport_photo?.[0]) {
@@ -84,7 +84,8 @@ export const InsertRegistration = async (req, res) => {
         school_state, school_zip_code, school_country, medium,
         passport_photo_url, uid_aadhaar_url, school_id_url, subjects,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW(), NOW())
+      RETURNING id
     `;
 
     const values = [
@@ -114,19 +115,12 @@ export const InsertRegistration = async (req, res) => {
       subjectsString,
     ];
 
-    const result = await db.execute(query, values);
-    
-    let insertId;
-    if (Array.isArray(result)) {
-      insertId = result[0].insertId;
-    } else if (result.insertId) {
-      insertId = result.insertId;
-    } else {
-      insertId = result;
-    }
-    
-    return res.status(201).json({ 
-      success: true, 
+    const result = await db.query(query, values);
+
+    const insertId = result.rows?.[0]?.id;
+
+    return res.status(201).json({
+      success: true,
       inserted_id: insertId,
       message: 'Registration completed successfully'
     });
@@ -134,7 +128,7 @@ export const InsertRegistration = async (req, res) => {
   } catch (error) {
     console.error('❌ InsertRegistration error:', error);
 
-    if (error.code === 'ER_DUP_ENTRY') {
+    if (error.code === '23505') {
       return res.status(409).json({ 
         error: 'Registration already exists',
         details: 'Duplicate entry detected'
